@@ -17,25 +17,32 @@ return view.extend({
 	render: function (data) {
 		var d = (data && data.ok) ? data : {};
 
+		/* 对齐 quickstart 官方内页：大标题直排、568px 单列、全宽堆叠按钮（青保存/红返回），
+		 * 并隐藏 LuCI 全局悬浮按钮条（本页自带保存）。 */
 		var css = ''
-			+ '.pon-guide{max-width:760px;margin:0 auto;padding:24px 16px;font-size:14px;color:#333;}'
-			+ '.pon-guide h2{font-size:20px;font-weight:600;margin:0 0 6px;}'
-			+ '.pon-guide .sub{color:#999;font-size:13px;margin:0 0 24px;}'
-			+ '.pon-field{margin-bottom:20px;}'
-			+ '.pon-field label{display:block;margin-bottom:6px;color:#4a4a4a;font-size:13px;}'
-			+ '.pon-field label .req{color:#e02020;margin-right:2px;}'
+			+ '.cbi-page-actions,.cbi-map-actions{display:none !important;}'
+			+ '.pon-guide{max-width:568px;margin:0 auto;padding:56px 16px 40px;font-size:14px;color:#333;}'
+			+ '.pon-guide h2{font-size:42px;line-height:1.2;font-weight:700;color:#282828;margin:0 0 10px;'
+			+ 'background:transparent;border-radius:0;box-shadow:none;padding:0;}'
+			+ '.pon-guide .sub{color:#999;font-size:14px;font-weight:600;margin:0 0 32px;}'
+			+ '.pon-field{margin-bottom:22px;}'
+			+ '.pon-field label{display:block;margin-bottom:8px;color:#333;font-size:14px;font-weight:600;}'
+			+ '.pon-field label .req{color:#e02020;margin-right:3px;}'
 			+ '.pon-field input,.pon-field select{width:100%;height:44px;border:1px solid #d9dee2;'
-			+ 'border-radius:6px;padding:0 12px;font-size:14px;box-sizing:border-box;background:#fff;outline:none;}'
+			+ 'border-radius:4px;padding:0 12px;font-size:14px;box-sizing:border-box;background:#fff;outline:none;}'
 			+ '.pon-field input:focus,.pon-field select:focus{border-color:#0b8fa8;}'
-			+ '.pon-status{background:#f4f8f9;border-radius:8px;padding:12px 16px;margin:0 0 24px;'
+			+ '.pon-status{background:#f4f8f9;border-radius:8px;padding:12px 16px;margin:0 0 28px;'
 			+ 'color:#666;font-size:13px;line-height:1.9;}'
 			+ '.pon-status b{color:#0b8fa8;font-weight:600;}'
-			+ '.pon-btns{display:flex;gap:12px;margin-top:28px;}'
-			+ '.pon-btn-back{height:42px;padding:0 26px;border:1px solid #d9dee2;border-radius:8px;'
-			+ 'background:#fff;color:#666;font-size:14px;cursor:pointer;}'
-			+ '.pon-btn-save{height:42px;padding:0 30px;border:0;border-radius:8px;'
-			+ 'background:#0b8fa8;color:#fff;font-size:14px;cursor:pointer;}'
-			+ '.pon-msg{min-height:18px;font-size:12px;color:#888;margin-top:10px;}';
+			+ '.pon-btns{display:block;margin-top:36px;}'
+			+ '.pon-btn-save,.pon-btn-back{display:block;width:100%;height:46px;border:0;border-radius:6px;'
+			+ 'font-size:15px;font-weight:600;cursor:pointer;}'
+			+ '.pon-btn-save{background:#0b8fa8;color:#fff;}'
+			+ '.pon-btn-save:hover{background:#0a7f95;}'
+			+ '.pon-btn-save:disabled{opacity:.6;cursor:default;}'
+			+ '.pon-btn-back{background:#e05c68;color:#fff;margin-top:14px;}'
+			+ '.pon-btn-back:hover{background:#d14e5a;}'
+			+ '.pon-msg{min-height:18px;font-size:12px;color:#888;margin-top:12px;}';
 
 		var style = E('style', {}, css);
 
@@ -91,7 +98,9 @@ return view.extend({
 				msg.textContent = '网络错误，请重试';
 			}).finally(function () { save.disabled = false; });
 		});
-		back.addEventListener('click', function () { history.back(); });
+		back.addEventListener('click', function () {
+			location.href = L.url('admin', 'network_guide', 'pages', 'network');
+		});
 
 		var page = E('div', { 'class': 'pon-guide' }, [
 			E('h2', {}, 'PON 配置'),
@@ -100,7 +109,7 @@ return view.extend({
 			field('线路模式', false, modeSel),
 			field('序列号（SN）', false, snIn),
 			field('Registration-ID', false, regIn),
-			E('div', { 'class': 'pon-btns' }, [back, save]),
+			E('div', { 'class': 'pon-btns' }, [save, back]),
 			msg
 		]);
 
