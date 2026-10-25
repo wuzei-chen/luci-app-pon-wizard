@@ -1,4 +1,7 @@
-/* pon-card.js — 网络向导 PON 配置卡片 v7（2026-10-25）
+/* pon-card.js — 网络向导 PON 配置卡片 v21（2026-10-25）
+ * 点击卡片跳转独立向导页 admin/network/pon/wizard（LuCI 原生路由，风格=官方内页）。
+ * 原地面板方案退役：quickstart 动态布局（flex 居中/滚动记忆/重渲染）导致
+ * 跨分辨率的位置漂移无法彻底根治，独立页是稳定方案。
  * 卡片：纯克隆现有卡（scoped CSS/nth 渐变天然一致），插末位，桌面 4 列。
  * 交互：点击卡片在卡片行下方原地展开/收起 quickstart 内页风格配置面板，
  * 不再跳转。数据走 luci.controller.pon_card（status/apply）。
@@ -35,8 +38,7 @@
 		card.classList.add('pon-card-item');
 
 		var a = card.querySelector('a');
-		a.href = 'javascript:;';
-		a.addEventListener('click', function (e) { e.preventDefault(); toggle(); });
+		a.href = '/cgi-bin/luci/admin/network/pon/wizard';
 
 		var thumb = card.querySelector('.thumbnail');
 		thumb.style.backgroundImage = 'linear-gradient(145deg, rgb(11, 191, 200) 0%, rgb(11, 143, 168) 100%)';
@@ -373,109 +375,11 @@
 		return panel;
 	}
 
-	function setPageChrome(page, open) {
-		/* 内容高于任一祖先 flex 容器时，center 对称溢出会把标题顶进横条
-		   （分辨率相关）。展开时沿途祖先全部顶部对齐，收起时还原。 */
-		var e = page.parentElement;
-		while (e && e !== document.body) {
-			if (open) {
-				if (e.dataset.ponPrevAlign === undefined) {
-					e.dataset.ponPrevAlign = e.style.alignItems || '';
-					e.dataset.ponPrevJust = e.style.justifyContent || '';
-					e.style.alignItems = 'flex-start';
-					e.style.justifyContent = 'flex-start';
-				}
-			} else if (e.dataset.ponPrevAlign !== undefined) {
-				e.style.alignItems = e.dataset.ponPrevAlign;
-				e.style.justifyContent = e.dataset.ponPrevJust;
-				delete e.dataset.ponPrevAlign;
-				delete e.dataset.ponPrevJust;
-			}
-			e = e.parentElement;
-		}
-	}
-
-	function toggle() {
-		/* 官方内页行为：整个 .page 内容区让位（标题/描述/卡片行/底部提示全部隐藏） */
-		var row = card ? card.parentElement : document.querySelector('.network-containers');
-		if (!row) return;
-		var page = row.parentElement;
-		if (page.querySelector('.pon-card-panel') === null) {
-			page.appendChild(buildPanel());
-		} else if (!panel.isConnected) {
-			page.appendChild(panel);
-		}
-		var opening = (panel.style.display !== 'block');
-		panel.style.display = opening ? 'block' : 'none';
-		if (opening) {
-			page.classList.add('pon-open');
-			/* 顶部避让 = 绿头实际高度（固定头环境下内容必须让位，文档流环境等效官方 ~130px 标题位） */
-			var hdr = document.querySelector('header');
-			panel.style.paddingTop = ((hdr ? hdr.offsetHeight : 60) + 50) + 'px';
-		} else {
-			page.classList.remove('pon-open');
-			panel.style.paddingTop = '';
-		}
-		setPageChrome(page, opening);
-		Array.prototype.forEach.call(page.children, function (c) {
-			if (c === panel) return;
-			if (opening) { c.dataset.ponPrevDisplay = c.style.display; c.style.display = 'none'; }
-			else { c.style.display = c.dataset.ponPrevDisplay || ''; }
-		});
-		if (opening) { scrollTop(); poll(); }
-	}
-
-	function poll() {
-		if (!panel || !refs.status || !panel.isConnected) return;
-		fetch(API + 'pon_card_status').then(function (r) { return r.json(); }).then(function (d) {
-			try {
-			if (!d.ok) { refs.status.textContent = '状态读取失败'; return; }
-			var rx = (d.rx_power != null) ? Number(d.rx_power).toFixed(1) + ' dBm' : '-';
-			refs.status.textContent = '';
-			[['活动模式', d.active_mode || '-'], ['ONU 状态', d.onu_state || '-'],
-			['光信号', d.optical ? '有' : '无'], ['接收光功率', rx], ['生命周期', d.lifecycle || '-']]
-			.forEach(function (kv) {
-				var s = el('span', null, kv[0] + '：' + kv[1]);
-				s.style.cssText = 'margin-right:20px;white-space:nowrap;display:inline-block;';
-				refs.status.appendChild(s);
-			});
-			if (document.activeElement !== refs.modeSel) refs.modeSel.value = d.cfg_mode || '';
-			if (document.activeElement !== refs.snIn) refs.snIn.value = d.cfg_serial || '';
-			if (document.activeElement !== refs.regIn) refs.regIn.value = (d.cfg_regid || '').replace(/^text:/, '');
-		} catch (e) {}
-		}).catch(function () { try { refs.status.textContent = '状态读取失败'; } catch (e) {} });
-	}
-
-	function injectCss() {
-		if (document.head.querySelector('style.pon-card-css')) return;
-		var st = document.createElement('style');
-		st.className = 'pon-card-css';
-		st.textContent = '@media (min-width:768px){.network-containers .network-container_item{'
-			+ 'flex:0 0 calc(25% - 9px) !important;max-width:calc(25% - 9px) !important;}}'
-			+ '.pon-open{margin-top:0 !important;align-items:flex-start !important;}';
-		document.head.appendChild(st);
-	}
-
-	function mount() {
-		var row = document.querySelector('.network-containers');
-		if (!row || row.querySelector('.pon-card-item')) return false;
-		var items = Array.from(row.querySelectorAll(':scope > .network-container_item'));
-		var ref = items[items.length - 1];
-		if (!ref) return false;
-		injectCss();
-		if (panel && panel.isConnected) { panel.style.display = 'none'; }
-		row.appendChild(buildCard(ref));
-		return true;
-	}
-
 	function boot() {
 		/* SPA 常驻观察：官方内页返回时 Vue 会重建卡片行并销毁已插入的 PON 卡，
 		   mount 幂等（卡在即跳过），每次 DOM 变更都补插 */
 		var mo = new MutationObserver(function () { mount(); });
 		mo.observe(document.body, { childList: true, subtree: true });
-		setInterval(function () {
-			if (panel && panel.style.display === 'block') poll();
-		}, 5000);
 		mount();
 	}
 	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
