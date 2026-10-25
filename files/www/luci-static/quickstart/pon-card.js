@@ -370,6 +370,28 @@
 		return panel;
 	}
 
+	function setPageChrome(page, open) {
+		/* 内容高于任一祖先 flex 容器时，center 对称溢出会把标题顶进横条
+		   （分辨率相关）。展开时沿途祖先全部顶部对齐，收起时还原。 */
+		var e = page.parentElement;
+		while (e && e !== document.body) {
+			if (open) {
+				if (e.dataset.ponPrevAlign === undefined) {
+					e.dataset.ponPrevAlign = e.style.alignItems || '';
+					e.dataset.ponPrevJust = e.style.justifyContent || '';
+					e.style.alignItems = 'flex-start';
+					e.style.justifyContent = 'flex-start';
+				}
+			} else if (e.dataset.ponPrevAlign !== undefined) {
+				e.style.alignItems = e.dataset.ponPrevAlign;
+				e.style.justifyContent = e.dataset.ponPrevJust;
+				delete e.dataset.ponPrevAlign;
+				delete e.dataset.ponPrevJust;
+			}
+			e = e.parentElement;
+		}
+	}
+
 	function toggle() {
 		/* 官方内页行为：整个 .page 内容区让位（标题/描述/卡片行/底部提示全部隐藏） */
 		var row = card ? card.parentElement : document.querySelector('.network-containers');
@@ -383,6 +405,7 @@
 		var opening = (panel.style.display !== 'block');
 		panel.style.display = opening ? 'block' : 'none';
 		if (opening) { page.classList.add('pon-open'); } else { page.classList.remove('pon-open'); }
+		setPageChrome(page, opening);
 		Array.prototype.forEach.call(page.children, function (c) {
 			if (c === panel) return;
 			if (opening) { c.dataset.ponPrevDisplay = c.style.display; c.style.display = 'none'; }
