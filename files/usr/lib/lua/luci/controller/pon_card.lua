@@ -4,6 +4,8 @@
 module("luci.controller.pon_card", package.seeall)
 
 function index()
+	-- 分步向导页：call 模板渲染（无 title），不进菜单树——网络向导保持叶子节点直达卡片页
+	entry({"admin", "network_guide", "pon_wizard"}, template("pon_wizard")).leaf = true
 	entry({"admin", "network_guide", "pon_card_status"}, call("api_status")).leaf = true
 	entry({"admin", "network_guide", "pon_card_apply"}, call("api_apply")).leaf = true
 end
