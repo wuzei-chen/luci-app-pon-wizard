@@ -1,6 +1,6 @@
 /* pon-card.js — 网络向导 PON 配置卡片 v22（2026-10-25）
  * 克隆官方卡片（scoped CSS 继承，风格零偏差），插卡片行末位，桌面 4 列。
- * 点击卡片跳转独立向导页 admin/network/pon/wizard（LuCI 原生路由，
+ * 点击卡片跳转独立向导页 admin/network_guide/pon_wizard（LuCI 原生路由，
  * 向导风格配置界面，无 quickstart 动态布局冲突）。
  * 注入式面板方案已退役（quickstart 动态布局导致跨分辨率位置漂移）。
  */
@@ -25,7 +25,7 @@
 		card.classList.add('pon-card-item');
 
 		var a = card.querySelector('a');
-		a.href = '/cgi-bin/luci/admin/network/pon/wizard';
+		a.href = '/cgi-bin/luci/admin/network_guide/pon_wizard';
 
 		var thumb = card.querySelector('.thumbnail');
 		/* 官方 nth-child(9n+4) 无渐变定义（原页面仅 3 卡），补主题青渐变 */

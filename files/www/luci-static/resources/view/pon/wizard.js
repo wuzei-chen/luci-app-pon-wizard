@@ -73,13 +73,16 @@ return view.extend({
 		save.addEventListener('click', function () {
 			save.disabled = true;
 			msg.textContent = '保存中…';
-			L.Request.post(L.url('admin', 'network_guide', 'pon_card_apply'), {
-				token: L.env.token,
+			/* 与 quickstart 面板相同的保存机制：raw fetch + URLSearchParams */
+			var url = L.url('admin', 'network_guide', 'pon_card_apply');
+			if (L.env.token) url += '?token=' + L.env.token;
+			var body = new URLSearchParams({
 				mode: modeSel.value,
 				serial: snIn.value.trim(),
 				regid: regIn.value.trim(),
 				restart: '0'
-			}, { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }).then(function (r) {
+			});
+			fetch(url, { method: 'POST', body: body }).then(function (r) {
 				return r.json();
 			}).then(function (r) {
 				msg.textContent = r.ok ? '已保存。重启 PON 线路后新身份生效（网络 → PON → 状态 可查看注册进程）。'

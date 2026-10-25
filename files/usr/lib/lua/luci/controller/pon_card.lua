@@ -5,7 +5,7 @@ module("luci.controller.pon_card", package.seeall)
 
 function index()
 	entry({"admin", "network_guide", "pon_card_status"}, call("api_status")).leaf = true
-	entry({"admin", "network_guide", "pon_card_apply"}, post("api_apply")).leaf = true
+	entry({"admin", "network_guide", "pon_card_apply"}, call("api_apply")).leaf = true
 end
 
 local function json_out(tbl)

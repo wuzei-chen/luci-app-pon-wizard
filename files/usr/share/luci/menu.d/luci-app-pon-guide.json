@@ -1,5 +1,5 @@
 {
-	"admin/network/pon/wizard": {
+	"admin/network_guide/pon_wizard": {
 		"title": "向导配置",
 		"order": 25,
 		"action": {
