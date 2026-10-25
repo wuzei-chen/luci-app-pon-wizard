@@ -57,7 +57,16 @@
 		return card;
 	}
 
-			function buildPanel() {
+			function scrollTop() {
+		/* .page 在面板展开后自身也是滚动容器（面板高于容器），必须一并复位 */
+		var sc = document.querySelector('.main-right');
+		if (sc) sc.scrollTop = 0;
+		var pg = document.querySelector('.pon-open');
+		if (pg) pg.scrollTop = 0;
+		window.scrollTo(0, 0);
+	}
+
+	function buildPanel() {
 		/* 四步分步向导（官方风格）：模式 → 注册身份 → 高级 → 确认应用 */
 		panel = el('div', 'pon-card-panel');
 		panel.style.cssText = 'display:none;width:100%;padding:36px 0 12px;'
@@ -152,12 +161,6 @@
 			if (hint) { var h = el('div', null, hint); h.style.cssText = 'font-size:12px;color:rgb(153,153,153);margin-top:4px;'; f.appendChild(h); }
 			return f;
 		}
-
-		function scrollTop() {
-		var sc = document.querySelector('.main-right') || document.scrollingElement;
-		if (sc) sc.scrollTop = 0;
-		window.scrollTo(0, 0);
-	}
 
 	function collect() {
 			content.querySelectorAll('[data-f]').forEach(function (i) {
@@ -404,7 +407,15 @@
 		}
 		var opening = (panel.style.display !== 'block');
 		panel.style.display = opening ? 'block' : 'none';
-		if (opening) { page.classList.add('pon-open'); } else { page.classList.remove('pon-open'); }
+		if (opening) {
+			page.classList.add('pon-open');
+			/* 顶部避让 = 绿头实际高度（固定头环境下内容必须让位，文档流环境等效官方 ~130px 标题位） */
+			var hdr = document.querySelector('header');
+			panel.style.paddingTop = ((hdr ? hdr.offsetHeight : 60) + 50) + 'px';
+		} else {
+			page.classList.remove('pon-open');
+			panel.style.paddingTop = '';
+		}
 		setPageChrome(page, opening);
 		Array.prototype.forEach.call(page.children, function (c) {
 			if (c === panel) return;
@@ -415,8 +426,9 @@
 	}
 
 	function poll() {
-		if (!panel) return;
+		if (!panel || !refs.status || !panel.isConnected) return;
 		fetch(API + 'pon_card_status').then(function (r) { return r.json(); }).then(function (d) {
+			try {
 			if (!d.ok) { refs.status.textContent = '状态读取失败'; return; }
 			var rx = (d.rx_power != null) ? Number(d.rx_power).toFixed(1) + ' dBm' : '-';
 			refs.status.textContent = '';
@@ -430,7 +442,8 @@
 			if (document.activeElement !== refs.modeSel) refs.modeSel.value = d.cfg_mode || '';
 			if (document.activeElement !== refs.snIn) refs.snIn.value = d.cfg_serial || '';
 			if (document.activeElement !== refs.regIn) refs.regIn.value = (d.cfg_regid || '').replace(/^text:/, '');
-		}).catch(function () { refs.status.textContent = '状态读取失败'; });
+		} catch (e) {}
+		}).catch(function () { try { refs.status.textContent = '状态读取失败'; } catch (e) {} });
 	}
 
 	function injectCss() {
@@ -439,8 +452,7 @@
 		st.className = 'pon-card-css';
 		st.textContent = '@media (min-width:768px){.network-containers .network-container_item{'
 			+ 'flex:0 0 calc(25% - 9px) !important;max-width:calc(25% - 9px) !important;}}'
-			+ '.pon-open{padding-top:0 !important;margin-top:0 !important;align-items:flex-start !important;}'
-			+ '.pon-open .pon-card-panel{padding-top:10px !important;}';
+			+ '.pon-open{margin-top:0 !important;align-items:flex-start !important;}';
 		document.head.appendChild(st);
 	}
 
