@@ -1,0 +1,10 @@
+{
+	"admin/network/pon/wizard": {
+		"title": "向导配置",
+		"order": 25,
+		"action": {
+			"type": "view",
+			"path": "pon/wizard"
+		}
+	}
+}
