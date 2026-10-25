@@ -1,10 +1,10 @@
 {
 	"admin/network_guide/pon_wizard": {
-		"title": "向导配置",
+		"title": "PON 配置",
 		"order": 25,
 		"action": {
 			"type": "view",
-			"path": "pon/wizard"
+			"path": "pon/wizard2"
 		}
 	}
 }
